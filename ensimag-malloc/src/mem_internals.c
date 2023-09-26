@@ -17,15 +17,39 @@ unsigned long knuth_mmix_one_round(unsigned long in)
 
 void *mark_memarea_and_get_user_ptr(void *ptr, unsigned long size, MemKind k)
 {
-    /* ecrire votre code ici */
-    return (void *)0;
+    unsigned long magic = (knuth_mmix_one_round((unsigned long)ptr) & ~(0b11UL)) | k;
+
+    unsigned long *p = ptr;
+    *p = size;
+    p = (unsigned long *)((char *)p + 8);
+    *p = magic;
+
+    void *user_ptr = (void *)((char *)p + 8);
+
+    p = (unsigned long *)((char *)user_ptr + size);
+    *p = magic;
+    p = (unsigned long *)((char *)p + 8);
+    *p = size;
+
+    return user_ptr;
 }
 
-Alloc
-mark_check_and_get_alloc(void *ptr)
+Alloc mark_check_and_get_alloc(void *ptr)
 {
-    /* ecrire votre code ici */
-    Alloc a = {};
+    unsigned long *p = (unsigned long *)((char *)ptr - 16);
+    void *memarea_ptr = p;
+    unsigned long size = *p;
+    p = (unsigned long *)((char *)ptr + 8);
+    unsigned long magic = *p;
+    MemKind k = magic & 0b11UL;
+    assert(magic == (knuth_mmix_one_round((unsigned long)memarea_ptr) & ~(0b11UL)) | k);
+
+    p = (unsigned long *)((char *)ptr + size);
+    assert(*p == magic);
+    p = (unsigned long *)((char *)ptr + 8);
+    assert(*p == size);
+
+    Alloc a = { memarea_ptr, size, k };
     return a;
 }
 
