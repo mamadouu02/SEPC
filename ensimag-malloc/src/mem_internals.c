@@ -17,42 +17,33 @@ unsigned long knuth_mmix_one_round(unsigned long in)
 
 void *mark_memarea_and_get_user_ptr(void *ptr, unsigned long size, MemKind k)
 {
-    assert(size >= 32);
-    unsigned long user_size = size - 32;
+    unsigned long *p = ptr;
+    void *user_ptr = p + 2;
+    unsigned long user_size = size - 4 * sizeof(unsigned long);
     unsigned long magic = (knuth_mmix_one_round((unsigned long)ptr) & ~(0b11UL)) | k;
 
-    unsigned long *p = ptr;
-    *p = size;
-    p = (unsigned long *)((char *)p + 8);
-    *p = magic;
-
-    void *user_ptr = (char *)p + 8;
-
+    p[0] = size;
+    p[1] = magic;
     p = (unsigned long *)((char *)user_ptr + user_size);
-    *p = magic;
-    p = (unsigned long *)((char *)p + 8);
-    *p = size;
+    p[0] = magic;
+    p[1] = size;
 
     return user_ptr;
 }
 
 Alloc mark_check_and_get_alloc(void *ptr)
 {
-    void *memarea_ptr = (char *)ptr - 16;
-
-    unsigned long *p = memarea_ptr;
-    unsigned long size = *p;
-    unsigned long user_size = size - 32;
-    p = (unsigned long *)((char *)p + 8);
-    unsigned long magic = *p;
+    unsigned long *p = (unsigned long *)ptr - 2;
+    unsigned long size = p[0];
+    unsigned long magic = p[1];
+    void *memarea_ptr = p;
     MemKind k = magic & 0b11UL;
-
     assert(magic == ((knuth_mmix_one_round((unsigned long)memarea_ptr) & ~(0b11UL)) | k));
 
+    unsigned long user_size = size - 4 * sizeof(unsigned long);
     p = (unsigned long *)((char *)ptr + user_size);
-    assert(*p == magic);
-    p = (unsigned long *)((char *)p + 8);
-    assert(*p == size);
+    assert(p[0] == magic);
+    assert(p[1] == size);
 
     Alloc a = { memarea_ptr, k, size };
     return a;
