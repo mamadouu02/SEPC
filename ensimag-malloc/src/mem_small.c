@@ -12,23 +12,23 @@ void *emalloc_small(unsigned long size)
 {
     if (arena.chunkpool == NULL) {
         unsigned long nb_chunks = mem_realloc_small() / CHUNKSIZE;
-        char **ptr = arena.chunkpool;
+        unsigned long *ptr = arena.chunkpool;
 
         for (int i = 0; i < nb_chunks - 1; i++) {
-            ptr[96 * i] = (void *)(ptr + CHUNKSIZE * (i + 1));
+            ptr[CHUNKSIZE * i] = (unsigned long)((char *)ptr + CHUNKSIZE * (i + 1));
         }
 
-        ptr[96 * (nb_chunks - 1)] = NULL;
+        ptr[CHUNKSIZE * (nb_chunks - 1)] = 0;
     }
 
-    void **ptr = arena.chunkpool;
-    arena.chunkpool = *ptr;
+    unsigned long *ptr = arena.chunkpool;
+    arena.chunkpool = (void *)*ptr;
 
     return mark_memarea_and_get_user_ptr(ptr, CHUNKSIZE, SMALL_KIND);
 }
 
 void efree_small(Alloc a)
 {
-    *((char *)a.ptr) = arena.chunkpool;
+    *((unsigned long *)a.ptr) = (unsigned long)arena.chunkpool;
     arena.chunkpool = a.ptr;
 }
