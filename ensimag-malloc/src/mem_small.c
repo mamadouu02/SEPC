@@ -8,13 +8,27 @@
 #include "mem.h"
 #include "mem_internals.h"
 
-void *
-emalloc_small(unsigned long size)
+void *emalloc_small(unsigned long size)
 {
-    /* ecrire votre code ici */
-    return (void *)0;
+    if (arena.chunkpool == NULL) {
+        unsigned long nb_chunks = mem_realloc_small() / CHUNKSIZE;
+        char **ptr = arena.chunkpool;
+
+        for (int i = 0; i < nb_chunks - 1; i++) {
+            ptr[96 * i] = (void *)(ptr + CHUNKSIZE * (i + 1));
+        }
+
+        ptr[96 * (nb_chunks - 1)] = NULL;
+    }
+
+    void **ptr = arena.chunkpool;
+    arena.chunkpool = *ptr;
+
+    return mark_memarea_and_get_user_ptr(ptr, CHUNKSIZE, SMALL_KIND);
 }
 
-void efree_small(Alloc a) {
-    /* ecrire votre code ici */
+void efree_small(Alloc a)
+{
+    *((char *)a.ptr) = arena.chunkpool;
+    arena.chunkpool = a.ptr;
 }
