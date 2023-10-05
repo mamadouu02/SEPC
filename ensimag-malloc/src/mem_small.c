@@ -15,10 +15,11 @@ void *emalloc_small(unsigned long size)
         unsigned long *ptr = arena.chunkpool;
 
         for (int i = 0; i < nb_chunks - 1; i++) {
-            ptr[CHUNKSIZE * i] = (unsigned long)((char *)ptr + CHUNKSIZE * (i + 1));
+            *ptr = (unsigned long)ptr + CHUNKSIZE;
+            ptr = (unsigned long *)*ptr;
         }
 
-        ptr[CHUNKSIZE * (nb_chunks - 1)] = 0;
+        *ptr = 0;
     }
 
     unsigned long *ptr = arena.chunkpool;
