@@ -30,7 +30,7 @@ void *emalloc_medium(unsigned long size)
     assert(size < LARGEALLOC);
     assert(size > SMALLALLOC);
 
-    unsigned int i = puiss2(size);
+    unsigned int i = puiss2(size + 4 * sizeof(unsigned long));
     unsigned j = i;
 
     while (j < FIRST_ALLOC_MEDIUM_EXPOSANT + arena.medium_next_exponant && arena.TZL[j] == NULL) {
