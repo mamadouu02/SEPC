@@ -73,7 +73,7 @@ unsigned long mem_realloc_medium()
     unsigned long size = (FIRST_ALLOC_MEDIUM << arena.medium_next_exponant);
     assert(size == (1UL << indice));
     arena.TZL[indice] = mmap(0,
-			     size*2, // twice the size to allign
+			     size * 2, // twice the size to allign
 			     PROT_READ | PROT_WRITE | PROT_EXEC,
 			     MAP_PRIVATE | MAP_ANONYMOUS,
 			     -1,
