@@ -98,11 +98,6 @@ unsigned int nb_TZL_entries()
     return nb;
 }
 
-void *get_buddy_ptr(void *ptr, unsigned long size)
-{
-    return (void *)((unsigned long)ptr ^ size);
-}
-
 void *pop(int i) {
     void **stack = (i < 0) ? &arena.chunkpool : &arena.TZL[i];
     assert(*stack);

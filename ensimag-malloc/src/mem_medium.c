@@ -24,6 +24,11 @@ unsigned int puiss2(unsigned long size) {
     return p;
 }
 
+void *get_buddy_ptr(void *ptr, unsigned long size)
+{
+    return (void *)((unsigned long)ptr ^ size);
+}
+
 void *emalloc_medium(unsigned long size)
 {
     assert(size < LARGEALLOC);
