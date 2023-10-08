@@ -13,16 +13,10 @@
 
 /** squelette du TP allocateur memoire */
 
-MemArena arena = {};
-
-
-/* ecrire votre code ici */
-
+__thread MemArena arena = {};
 
 void *emalloc(unsigned long size)
 {
-    /*  ecrire votre code ici */
-
     if (size == 0)
 	    return NULL;
 	    
@@ -36,23 +30,19 @@ void *emalloc(unsigned long size)
 
 void efree(void *ptr)
 {
-    /* ecrire votre code ici */
-
     Alloc a = mark_check_and_get_alloc(ptr);
 
-    switch( a.kind ) {
-    case SMALL_KIND:
-        efree_small(a);
-        break;
-    case MEDIUM_KIND:
-        efree_medium(a);
-        break;
-    case LARGE_KIND:
-        efree_large(a);
-        break;
-    default:
-	    assert(0);
+    switch(a.kind) {
+        case SMALL_KIND:
+            efree_small(a);
+            break;
+        case MEDIUM_KIND:
+            efree_medium(a);
+            break;
+        case LARGE_KIND:
+            efree_large(a);
+            break;
+        default:
+            assert(0);
     }
 }
-
-

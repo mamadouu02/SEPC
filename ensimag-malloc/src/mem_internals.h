@@ -48,7 +48,7 @@ typedef struct _Alloc {
     unsigned long size;
 } Alloc;
 
-extern MemArena arena;
+extern __thread MemArena arena;
 
 unsigned long knuth_mmix_one_round(unsigned long in);
 void *mark_memarea_and_get_user_ptr(void *ptr, unsigned long size, MemKind k);
