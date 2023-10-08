@@ -66,6 +66,11 @@ void efree_small(Alloc a);
 void efree_medium(Alloc a);
 void efree_large(Alloc a);
 
+void *get_buddy_ptr(void *ptr, unsigned long size);
+
+void *pop(int i);
+void push(void** ptr, int i);
+
 #ifdef __cplusplus
 }
 #endif

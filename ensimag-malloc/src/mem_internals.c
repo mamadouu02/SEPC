@@ -49,7 +49,6 @@ Alloc mark_check_and_get_alloc(void *ptr)
     return a;
 }
 
-
 unsigned long mem_realloc_small()
 {
     assert(arena.chunkpool == 0);
@@ -87,7 +86,6 @@ unsigned long mem_realloc_medium()
     return size; // lie on allocation size, but never free
 }
 
-
 // used for test in buddy algo
 unsigned int nb_TZL_entries()
 {
@@ -98,4 +96,23 @@ unsigned int nb_TZL_entries()
             nb++;
 
     return nb;
+}
+
+void *get_buddy_ptr(void *ptr, unsigned long size)
+{
+    return (void *)((unsigned long)ptr ^ size);
+}
+
+void *pop(int i) {
+    void **stack = (i < 0) ? &arena.chunkpool : &arena.TZL[i];
+    assert(*stack);
+    void **ptr = *stack;
+    *stack = *ptr;
+    return ptr;
+}
+
+void push(void** ptr, int i) {
+    void **stack = (i < 0) ? &arena.chunkpool : &arena.TZL[i];
+    *ptr = *stack;
+    *stack = ptr;
 }
