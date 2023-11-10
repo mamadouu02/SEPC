@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <wait.h>
 
 #include "variante.h"
 #include "readcmd.h"
@@ -24,6 +26,29 @@
 
 #if USE_GUILE == 1
 #include <libguile.h>
+
+void execute(struct cmdline *l) {
+	char **cmd = l->seq[0];
+
+	if (cmd != NULL) {
+		int pid = fork();
+
+		switch (pid) {
+			case -1:
+				perror("fork:\n");
+				break;
+			case 0:
+				execvp(cmd[0], cmd);
+				break;
+			default:
+				if (!l->bg) {
+					wait(&pid);
+				}
+
+				break;
+		}
+	}
+}
 
 int question6_executer(char *line)
 {
@@ -128,6 +153,8 @@ int main() {
                         }
 			printf("\n");
 		}
+		
+		execute(l);
 	}
 
 }
