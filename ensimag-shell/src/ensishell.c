@@ -30,19 +30,20 @@
 void execute(struct cmdline *l) {
 	char **cmd = l->seq[0];
 
-	if (cmd != NULL) {
-		int pid = fork();
+	if (cmd) {
+		pid_t pid = fork();
 
 		switch (pid) {
 			case -1:
-				perror("fork:\n");
+				perror("fork:");
 				break;
 			case 0:
 				execvp(cmd[0], cmd);
 				break;
 			default:
-				if (!l->bg) {
-					waitpid(pid, NULL, 0);
+				if (l->bg == 0) {
+					int status;
+					waitpid(pid, &status, 0);
 				}
 
 				break;
@@ -124,15 +125,12 @@ int main() {
 #endif
 
 		/* parsecmd free line and set it up to 0 */
-		l = parsecmd( & line);
+		l = parsecmd(&line);
 
 		/* If input stream closed, normal termination */
 		if (!l) {
-		  
 			terminate(0);
 		}
-		
-
 		
 		if (l->err) {
 			/* Syntax error, read another command */
@@ -156,5 +154,4 @@ int main() {
 		
 		execute(l);
 	}
-
 }
