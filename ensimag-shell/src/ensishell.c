@@ -42,7 +42,7 @@ void execute(struct cmdline *l) {
 				break;
 			default:
 				if (!l->bg) {
-					wait(&pid);
+					waitpid(pid, NULL, 0);
 				}
 
 				break;
