@@ -9,7 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <wait.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "variante.h"
 #include "readcmd.h"
@@ -27,26 +28,99 @@
 #if USE_GUILE == 1
 #include <libguile.h>
 
-void execute(struct cmdline *l) {
+typedef struct process {
+	pid_t pid;
+	char *cmd;
+	struct process *next;
+} Process;
+
+Process *process_list = NULL;
+
+
+int insert_job(pid_t pid, char** cmd)
+{
+	Process *process = malloc(sizeof(Process));
+
+	if (process == NULL) {
+		fprintf(stderr, "error: malloc() failed\n");
+		return 1;
+	}
+
+	process->pid = pid;
+	char s[255] = "";
+
+	for (int i = 0; cmd[i] != 0; i++) {
+		strcat(s, cmd[i]);
+		strcat(s, " ");
+	}
+
+	process->cmd = malloc(sizeof(char *));
+
+	if (process->cmd == NULL) {
+		fprintf(stderr, "error: malloc() failed\n");
+		free(process);
+		return 1;
+	}
+
+	strcpy(process->cmd, s);
+	process->next = process_list;
+	process_list = process;
+	return 0;
+}
+
+void jobs(void)
+{
+	Process *prev = NULL;
+	Process *process = process_list;
+
+	while (process) {
+		int status;
+
+		if (waitpid(process->pid, &status, WNOHANG) == 0) {
+			printf("[%d] %s\n", process->pid, process->cmd);
+			prev = process;
+			process = process->next;
+		} else {
+			if (prev) {
+				prev->next = process->next;
+				free(process);
+				process = prev->next;
+			} else {
+				process_list = process->next;
+				free(process);
+				process = process_list;
+			}
+		}
+	}
+}
+
+void execute(struct cmdline *l)
+{
 	char **cmd = l->seq[0];
 
 	if (cmd) {
-		pid_t pid = fork();
+		if (strncmp(cmd[0], "jobs", 4) == 0) {
+			jobs();
+		} else {
+			pid_t pid = fork();
 
-		switch (pid) {
-			case -1:
-				perror("fork:");
-				break;
-			case 0:
-				execvp(cmd[0], cmd);
-				break;
-			default:
-				if (l->bg == 0) {
-					int status;
-					waitpid(pid, &status, 0);
-				}
+			switch (pid) {
+				case -1:
+					perror("fork");
+					break;
+				case 0:
+					execvp(cmd[0], cmd);
+					break;
+				default:
+					if (l->bg) {
+						insert_job(pid, cmd);
+					} else {
+						int status;
+						waitpid(pid, &status, 0);
+					}
 
-				break;
+					break;
+			}
 		}
 	}
 }
@@ -96,15 +170,15 @@ int main() {
 
 	while (1) {
 		struct cmdline *l;
-		char *line=0;
-		int i, j;
-		char *prompt = "ensishell>";
+		char *line = 0;
+		// int i, j;
+		char *prompt = "ensishell> ";
 
 		/* Readline use some internal memory structure that
 		   can not be cleaned at the end of the program. Thus
 		   one memory leak per command seems unavoidable yet */
 		line = readline(prompt);
-		if (line == 0 || ! strncmp(line,"exit", 4)) {
+		if (line == 0 || !strncmp(line, "exit", 4)) {
 			terminate(line);
 		}
 
@@ -138,19 +212,19 @@ int main() {
 			continue;
 		}
 
-		if (l->in) printf("in: %s\n", l->in);
-		if (l->out) printf("out: %s\n", l->out);
-		if (l->bg) printf("background (&)\n");
+		// if (l->in) printf("in: %s\n", l->in);
+		// if (l->out) printf("out: %s\n", l->out);
+		// if (l->bg) printf("background (&)\n");
 
 		/* Display each command of the pipe */
-		for (i=0; l->seq[i]!=0; i++) {
-			char **cmd = l->seq[i];
-			printf("seq[%d]: ", i);
-                        for (j=0; cmd[j]!=0; j++) {
-                                printf("'%s' ", cmd[j]);
-                        }
-			printf("\n");
-		}
+		// for (i=0; l->seq[i]!=0; i++) {
+		// 	char **cmd = l->seq[i];
+		// 	printf("seq[%d]: ", i);
+		// 	for (j=0; cmd[j]!=0; j++) {
+		// 		printf("'%s' ", cmd[j]);
+		// 	}
+		// 	printf("\n");
+		// }
 		
 		execute(l);
 	}
