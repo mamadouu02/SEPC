@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "variante.h"
 #include "readcmd.h"
@@ -36,36 +38,35 @@ typedef struct process {
 
 Process *process_list = NULL;
 
-
-int insert_job(pid_t pid, char** cmd)
+void insert_job(pid_t pid, char** argv)
 {
 	Process *process = malloc(sizeof(Process));
 
 	if (process == NULL) {
-		fprintf(stderr, "error: malloc() failed\n");
-		return 1;
+		perror("malloc");
+		exit(EXIT_FAILURE);
 	}
 
 	process->pid = pid;
-	char s[255] = "";
+	char cmd[255];
+	strcpy(cmd, argv[0]);
 
-	for (int i = 0; cmd[i] != 0; i++) {
-		strcat(s, cmd[i]);
-		strcat(s, " ");
+	for (int i = 1; argv[i] != 0; i++) {
+		strcat(cmd, " ");
+		strcat(cmd, argv[i]);
 	}
 
 	process->cmd = malloc(sizeof(char *));
 
 	if (process->cmd == NULL) {
-		fprintf(stderr, "error: malloc() failed\n");
+		perror("malloc");
 		free(process);
-		return 1;
+		exit(EXIT_FAILURE);
 	}
 
-	strcpy(process->cmd, s);
+	strcpy(process->cmd, cmd);
 	process->next = process_list;
 	process_list = process;
-	return 0;
 }
 
 void jobs(void)
@@ -94,32 +95,62 @@ void jobs(void)
 	}
 }
 
-void execute(struct cmdline *l)
+void exec_pipe(char **argv1, char**argv2)
 {
-	char **cmd = l->seq[0];
+	int fds[2];
+	pipe(fds);
+	pid_t pid = fork();
 
-	if (cmd) {
-		if (strncmp(cmd[0], "jobs", 4) == 0) {
+	switch (pid) {
+	case -1:
+		perror("fork");
+		exit(EXIT_FAILURE);
+		break;
+	case 0:
+		dup2(fds[0], STDIN_FILENO);
+		close(fds[1]);
+		close(fds[0]);
+		execvp(argv2[0], argv2);
+		break;
+	default:
+		dup2(fds[1], STDOUT_FILENO);
+		close(fds[0]);
+		close(fds[1]);
+		break;
+	}
+}
+
+void exec(struct cmdline *l)
+{
+	char **argv = l->seq[0];
+
+	if (argv) {
+		if (strncmp(argv[0], "jobs", 4) == 0) {
 			jobs();
 		} else {
 			pid_t pid = fork();
 
 			switch (pid) {
-				case -1:
-					perror("fork");
-					break;
-				case 0:
-					execvp(cmd[0], cmd);
-					break;
-				default:
-					if (l->bg) {
-						insert_job(pid, cmd);
-					} else {
-						int status;
-						waitpid(pid, &status, 0);
-					}
+			case -1:
+				perror("fork");
+				exit(EXIT_FAILURE);
+				break;
+			case 0:
+				if (l->seq[1]) {
+					exec_pipe(argv, l->seq[1]);
+				}
 
-					break;
+				execvp(argv[0], argv);
+				break;
+			default:
+				if (l->bg) {
+					insert_job(pid, argv);
+				} else {
+					int status;
+					waitpid(pid, &status, 0);
+				}
+
+				break;
 			}
 		}
 	}
@@ -147,25 +178,27 @@ SCM executer_wrapper(SCM x)
 #endif
 
 
-void terminate(char *line) {
+void terminate(char *line)
+{
 #if USE_GNU_READLINE == 1
 	/* rl_clear_history() does not exist yet in centOS 6 */
 	clear_history();
 #endif
 	if (line)
-	  free(line);
+		free(line);
 	printf("exit\n");
 	exit(0);
 }
 
 
-int main() {
-        printf("Variante %d: %s\n", VARIANTE, VARIANTE_STRING);
+int main()
+{
+	printf("Variante %d: %s\n", VARIANTE, VARIANTE_STRING);
 
 #if USE_GUILE == 1
-        scm_init_guile();
-        /* register "executer" function in scheme */
-        scm_c_define_gsubr("executer", 1, 0, 0, executer_wrapper);
+	scm_init_guile();
+	/* register "executer" function in scheme */
+	scm_c_define_gsubr("executer", 1, 0, 0, executer_wrapper);
 #endif
 
 	while (1) {
@@ -194,8 +227,8 @@ int main() {
 			sprintf(catchligne, "(catch #t (lambda () %s) (lambda (key . parameters) (display \"mauvaise expression/bug en scheme\n\")))", line);
 			scm_eval_string(scm_from_locale_string(catchligne));
 			free(line);
-                        continue;
-                }
+            continue;
+        }
 #endif
 
 		/* parsecmd free line and set it up to 0 */
@@ -226,6 +259,6 @@ int main() {
 		// 	printf("\n");
 		// }
 		
-		execute(l);
+		exec(l);
 	}
 }
