@@ -101,22 +101,18 @@ void exec_pipe(char **argv1, char**argv2)
 	pipe(fds);
 	pid_t pid = fork();
 
-	switch (pid) {
-	case -1:
+	if (pid == -1) {
 		perror("fork");
 		exit(EXIT_FAILURE);
-		break;
-	case 0:
+	} else if (pid == 0) {
 		dup2(fds[0], STDIN_FILENO);
 		close(fds[1]);
 		close(fds[0]);
 		execvp(argv2[0], argv2);
-		break;
-	default:
+	} else {
 		dup2(fds[1], STDOUT_FILENO);
 		close(fds[0]);
 		close(fds[1]);
-		break;
 	}
 }
 
@@ -130,27 +126,47 @@ void exec(struct cmdline *l)
 		} else {
 			pid_t pid = fork();
 
-			switch (pid) {
-			case -1:
+			if (pid == -1) {
 				perror("fork");
 				exit(EXIT_FAILURE);
-				break;
-			case 0:
+			} else if (pid == 0) {
+				if (l->in) {
+					int fd = open(l->in, O_RDONLY);
+
+					if (fd == -1) {
+						perror("open");
+						exit(EXIT_FAILURE);
+					}
+
+					dup2(fd, STDIN_FILENO);
+					close(fd);
+				}
+
+				if (l->out) {
+					int fd = open(l->out, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+					ftruncate(fd, 0);
+
+					if (fd == -1) {
+						perror("open");
+						exit(EXIT_FAILURE);
+					}
+
+					dup2(fd, STDOUT_FILENO);
+					close(fd);
+				}
+
 				if (l->seq[1]) {
 					exec_pipe(argv, l->seq[1]);
 				}
 
 				execvp(argv[0], argv);
-				break;
-			default:
+			} else {
 				if (l->bg) {
 					insert_job(pid, argv);
 				} else {
 					int status;
 					waitpid(pid, &status, 0);
 				}
-
-				break;
 			}
 		}
 	}
@@ -205,7 +221,7 @@ int main()
 		struct cmdline *l;
 		char *line = 0;
 		// int i, j;
-		char *prompt = "ensishell> ";
+		char *prompt = "ensishell>";
 
 		/* Readline use some internal memory structure that
 		   can not be cleaned at the end of the program. Thus
