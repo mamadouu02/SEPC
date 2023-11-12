@@ -116,8 +116,22 @@ void exec_pipe(char **argv1, char**argv2)
 	}
 }
 
-void exec(struct cmdline *l)
+void exec(char *line)
 {
+	/* parsecmd free line and set it up to 0 */
+	struct cmdline *l = parsecmd(&line);
+
+	/* If input stream closed, normal termination */
+	if (!l) {
+		terminate(0);
+	}
+	
+	if (l->err) {
+		/* Syntax error, read another command */
+		printf("error: %s\n", l->err);
+		continue;
+	}
+
 	char **argv = l->seq[0];
 
 	if (argv) {
@@ -179,11 +193,7 @@ int question6_executer(char *line)
 	 * parsecmd, then fork+execvp, for a single command.
 	 * pipe and i/o redirection are not required.
 	 */
-	printf("Not implemented yet: can not execute %s\n", line);
-
-	/* Remove this line when using parsecmd as it will free it */
-	free(line);
-	
+	exec(line);
 	return 0;
 }
 
@@ -218,15 +228,14 @@ int main()
 #endif
 
 	while (1) {
-		struct cmdline *l;
 		char *line = 0;
-		// int i, j;
 		char *prompt = "ensishell>";
 
 		/* Readline use some internal memory structure that
 		   can not be cleaned at the end of the program. Thus
 		   one memory leak per command seems unavoidable yet */
 		line = readline(prompt);
+
 		if (line == 0 || !strncmp(line, "exit", 4)) {
 			terminate(line);
 		}
@@ -246,35 +255,7 @@ int main()
             continue;
         }
 #endif
-
-		/* parsecmd free line and set it up to 0 */
-		l = parsecmd(&line);
-
-		/* If input stream closed, normal termination */
-		if (!l) {
-			terminate(0);
-		}
 		
-		if (l->err) {
-			/* Syntax error, read another command */
-			printf("error: %s\n", l->err);
-			continue;
-		}
-
-		// if (l->in) printf("in: %s\n", l->in);
-		// if (l->out) printf("out: %s\n", l->out);
-		// if (l->bg) printf("background (&)\n");
-
-		/* Display each command of the pipe */
-		// for (i=0; l->seq[i]!=0; i++) {
-		// 	char **cmd = l->seq[i];
-		// 	printf("seq[%d]: ", i);
-		// 	for (j=0; cmd[j]!=0; j++) {
-		// 		printf("'%s' ", cmd[j]);
-		// 	}
-		// 	printf("\n");
-		// }
-		
-		exec(l);
+		exec(line);
 	}
 }
