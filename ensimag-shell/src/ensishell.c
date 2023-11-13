@@ -95,7 +95,7 @@ void jobs(void)
 	}
 }
 
-void exec_pipe(char **argv1, char**argv2)
+void exec_pipe(char **argv)
 {
 	int fds[2];
 	pipe(fds);
@@ -108,7 +108,7 @@ void exec_pipe(char **argv1, char**argv2)
 		dup2(fds[0], STDIN_FILENO);
 		close(fds[1]);
 		close(fds[0]);
-		execvp(argv2[0], argv2);
+		execvp(argv[0], argv);
 	} else {
 		dup2(fds[1], STDOUT_FILENO);
 		close(fds[0]);
@@ -116,22 +116,8 @@ void exec_pipe(char **argv1, char**argv2)
 	}
 }
 
-void exec(char *line)
+void exec(struct cmdline *l)
 {
-	/* parsecmd free line and set it up to 0 */
-	struct cmdline *l = parsecmd(&line);
-
-	/* If input stream closed, normal termination */
-	if (!l) {
-		terminate(0);
-	}
-	
-	if (l->err) {
-		/* Syntax error, read another command */
-		printf("error: %s\n", l->err);
-		continue;
-	}
-
 	char **argv = l->seq[0];
 
 	if (argv) {
@@ -170,7 +156,7 @@ void exec(char *line)
 				}
 
 				if (l->seq[1]) {
-					exec_pipe(argv, l->seq[1]);
+					exec_pipe(l->seq[1]);
 				}
 
 				execvp(argv[0], argv);
@@ -193,7 +179,8 @@ int question6_executer(char *line)
 	 * parsecmd, then fork+execvp, for a single command.
 	 * pipe and i/o redirection are not required.
 	 */
-	exec(line);
+	struct cmdline *l = parsecmd(&line);
+	exec(l);
 	return 0;
 }
 
@@ -255,7 +242,21 @@ int main()
             continue;
         }
 #endif
+
+		/* parsecmd free line and set it up to 0 */
+		struct cmdline *l = parsecmd(&line);
+
+		/* If input stream closed, normal termination */
+		if (!l) {
+			terminate(0);
+		}
 		
-		exec(line);
+		if (l->err) {
+			/* Syntax error, read another command */
+			printf("error: %s\n", l->err);
+			continue;
+		}
+
+		exec(l);
 	}
 }
