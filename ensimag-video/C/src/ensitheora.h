@@ -8,8 +8,6 @@
 
 #define NBTEX 30
 
-extern pthread_mutex_t mutex;
-
 struct TextureDate {
   unsigned char *plane[3]; // copy of plane are contiguous, thus
                            // stride is width
