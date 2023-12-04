@@ -9,7 +9,9 @@
 #include <vorbis/codec.h>
 #include <pthread.h>
 
-extern pthread_t thread_theora2dl;
+extern pthread_t thread_theora;
+extern pthread_t thread_vorbis;
+extern pthread_mutex_t mutex;
 
 enum streamtype { TYPE_UNKNOW, TYPE_THEORA, TYPE_VORBIS };
 

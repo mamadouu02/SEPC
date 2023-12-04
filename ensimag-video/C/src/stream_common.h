@@ -9,7 +9,7 @@ extern bool fini;
 extern pthread_t theora2sdlthread;
 extern struct timespec datedebut;
 
-extern pthread_mutex_t mutex;
+extern pthread_t thread_theora2dl;
 
 int msFromStart();
 void pageReader(FILE *vf, ogg_sync_state *pstate, ogg_page *ppage);
