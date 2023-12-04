@@ -8,10 +8,6 @@ extern bool fini;
 
 /* Les extern des variables pour la synchro ici */
 
-extern bool sent;
-extern bool ready;
-extern int n;
-
 extern pthread_mutex_t mutex;
 extern pthread_cond_t cond_taille;
 extern pthread_cond_t cond_fenetre;
