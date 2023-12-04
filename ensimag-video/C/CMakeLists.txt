@@ -14,7 +14,7 @@ set(CMAKE_BUILD_TYPE Debug)
 #########
 # Vous devez editer les lignes suivantes pour y mettre vos logins
 #########
-set(LOGINS login1 login2 login3)
+set(LOGINS bartolia thiongam)
 
 # Vérification du renseignement des login
 list(SORT LOGINS)
