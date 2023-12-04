@@ -4,8 +4,11 @@
 #include "ensivideo.h"
 #include <SDL2/SDL.h>
 #include <ogg/ogg.h>
+#include <pthread.h>
 
 #define NBTEX 30
+
+extern pthread_mutex_t mutex;
 
 struct TextureDate {
   unsigned char *plane[3]; // copy of plane are contiguous, thus

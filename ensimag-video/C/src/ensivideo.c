@@ -8,6 +8,7 @@
 
 pthread_t thread_theora;
 pthread_t thread_vorbis;
+pthread_mutex_t mutex;
 
 int main(int argc, char *argv[]) {
   int res;
@@ -22,6 +23,8 @@ int main(int argc, char *argv[]) {
   res = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS);
   atexit(SDL_Quit);
   assert(res == 0);
+
+  pthread_mutex_init(&mutex, NULL);
 
   // Your code HERE
   // start the two stream readers (theoraStreamReader and vorbisStreamReader)
@@ -45,6 +48,8 @@ int main(int argc, char *argv[]) {
   // TODO
   /* liberer des choses ? */
   pthread_cancel(thread_vorbis);
+
+  pthread_mutex_destroy(&mutex);
 
   exit(EXIT_SUCCESS);
 }

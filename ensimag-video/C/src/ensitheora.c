@@ -54,9 +54,9 @@ void *draw2SDL(void *arg) {
 
   // ADD Your code HERE
   /* Protéger l'accès à la hashmap */
-
+  pthread_mutex_lock(&mutex);
   HASH_FIND_INT(theorastrstate, &serial, s);
-
+  pthread_mutex_unlock(&mutex);
   // END of your modification HERE
 
   assert(s->strtype == TYPE_THEORA);
