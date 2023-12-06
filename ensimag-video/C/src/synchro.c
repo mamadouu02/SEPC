@@ -8,7 +8,7 @@ bool ready = false;
 int n = 0;
 
 pthread_cond_t cond_taille = PTHREAD_COND_INITIALIZER;
-pthread_cond_t cond_fenetre = PTHREAD_COND_INITIALIZER;
+pthread_cond_t cond_texture = PTHREAD_COND_INITIALIZER;
 pthread_cond_t cond_cons = PTHREAD_COND_INITIALIZER;
 pthread_cond_t cond_prod = PTHREAD_COND_INITIALIZER;
 
@@ -35,14 +35,14 @@ void attendreTailleFenetre() {
 void signalerFenetreEtTexturePrete() {
     pthread_mutex_lock(&mutex);
     ready = true;
-    pthread_cond_signal(&cond_fenetre);
+    pthread_cond_signal(&cond_texture);
     pthread_mutex_unlock(&mutex);
 }
 
 void attendreFenetreTexture() {
     pthread_mutex_lock(&mutex);
     while (!ready) {
-        pthread_cond_wait(&cond_fenetre, &mutex);
+        pthread_cond_wait(&cond_texture, &mutex);
     }
     ready = false;
     pthread_mutex_unlock(&mutex);

@@ -9,7 +9,7 @@ bool fini = false;
 
 struct timespec datedebut;
 
-pthread_t thread_theora2dl;
+pthread_t theora2sdl_thread;
 
 int msFromStart() {
   struct timespec now;
@@ -144,7 +144,7 @@ int decodeAllHeaders(int respac, struct streamstate *s, enum streamtype type) {
 	      // BEGIN your modification HERE
         // lancement du thread gérant l'affichage (draw2SDL)
         // inserer votre code ici !!
-        pthread_create(&thread_theora2dl, NULL, draw2SDL, &s->serial);
+        pthread_create(&theora2sdl_thread, NULL, draw2SDL, &s->serial);
         // END of your modification
 
         assert(res == 0);
