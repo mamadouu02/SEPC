@@ -26,8 +26,8 @@ int main(int argc, char *argv[]) {
   // Your code HERE
   // start the two stream readers (theoraStreamReader and vorbisStreamReader)
   // each in a thread
-  pthread_create(&theora_thread, NULL, theoraStreamReader, &argv[1]);
-  pthread_create(&vorbis_thread, NULL, vorbisStreamReader, &argv[1]);
+  pthread_create(&theora_thread, NULL, theoraStreamReader, argv[1]);
+  pthread_create(&vorbis_thread, NULL, vorbisStreamReader, argv[1]);
   
   // wait for vorbis thread
   pthread_join(vorbis_thread, NULL);

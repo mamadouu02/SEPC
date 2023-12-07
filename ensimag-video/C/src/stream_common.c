@@ -144,7 +144,7 @@ int decodeAllHeaders(int respac, struct streamstate *s, enum streamtype type) {
 	      // BEGIN your modification HERE
         // lancement du thread gérant l'affichage (draw2SDL)
         // inserer votre code ici !!
-        pthread_create(&theora2sdl_thread, NULL, draw2SDL, &s->serial);
+        pthread_create(&theora2sdl_thread, NULL, draw2SDL, (void *)(intptr_t)s->serial);
         // END of your modification
 
         assert(res == 0);

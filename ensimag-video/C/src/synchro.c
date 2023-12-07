@@ -1,5 +1,6 @@
 #include "ensitheora.h"
 #include "synchro.h"
+#include "ensivideo.h"
 
 /* les variables pour la synchro, ici */
 
